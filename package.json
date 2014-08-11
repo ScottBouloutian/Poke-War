@@ -1,0 +1,15 @@
+{
+  "name": "Poke-War",
+  "version": "0.0.0",
+  "description": "Headless Facebook poke war combatant.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Scott Bouloutian",
+  "license": "ISC",
+  "dependencies": {
+    "q": "1.0.1",
+    "phantom": "0.6.5"
+  }
+}
