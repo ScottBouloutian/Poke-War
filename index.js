@@ -64,14 +64,12 @@ function clickPokeButtons() {
             var click = document.createEvent('Events');
             click.initEvent('click', true, false);
             pokeButton.dispatchEvent(click);
-          })
-          .then(function() {
-            console.log('You poked someone.');
           });
         }
       })
       .then(function() {
         if(pokeExists) {
+          console.log('You poked someone.');
           return Q.delay(3000);
         } else if(numRetry < 1) {
           console.log('Iteration ' + numRetry + ': Everyone has been poked back. Waiting ' + Config.shortInterval/1000 + " seconds...");
@@ -79,6 +77,7 @@ function clickPokeButtons() {
           page.reload();
           return Q.delay(Config.shortInterval);
         } else {
+          console.log('Hibernating...');
           continueLoop=false;
         }
       });
@@ -111,24 +110,28 @@ function startActivelyPoking() {
     });
 }
 
-// This is the main loop
-console.log('Starting Poke-War');
-Utils.promiseWhile(function() {
-  return numRetry >= 0;
-}, function() {
-  console.log('Checking for pokes...');
-  return haveBeenPoked()
-    .then(function(poked) {
-      if (poked) {
-        console.log("You have been poked! Seeking revenge...");
-        return startActivelyPoking();
-      }
-    })
-    .then(function() {
-      return Q.delay(Config.longInterval);
-    })
-})
-  .catch(function(error) {
-    console.log('There has been an error');
-    console.log(error);
-  });
+
+
+// // This is the main loop
+// console.log('Starting Poke-War');
+// Utils.promiseWhile(function() {
+//   return numRetry >= 0;
+// }, function() {
+//   console.log('Checking for pokes...');
+//   return haveBeenPoked()
+//     .then(function(poked) {
+//       if (poked) {
+//         console.log("You have been poked! Seeking revenge...");
+//         return startActivelyPoking();
+//       } else {
+//         console.log('No pokes found. Waiting ' + Config.longInterval/1000 + ' seconds...');
+//       }
+//     })
+//     .then(function() {
+//       return Q.delay(Config.longInterval);
+//     })
+// })
+//   .catch(function(error) {
+//     console.log('There has been an error');
+//     console.log(error);
+//   });
