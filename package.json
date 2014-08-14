@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "q": "1.0.1",
-    "phantom": "0.6.5"
+    "phantom": "0.6.5",
+    "fb": "0.7.0"
   }
 }
