@@ -19,17 +19,15 @@ var phantom,
 
 // Queries the Facebook's Graph API to see if anyone has poked you
 function haveBeenPoked() {
-  var deferred = Q.defer();
-  FB.api('/v2.1/me/pokes', function(res) {
-    if (!res || res.error) {
-      deferred.reject(res.error);
-    } else {
-      var result = [];
-      var pokes = res.data;
-      deferred.resolve(pokes.length > 0);
-    }
-  });
-  return deferred.promise;
+  return Q.npost(FB, 'napi', ['/v2.1/me/pokes'])
+    .then(function(res) {
+      if (!res || res.error) {
+        return Q.reject(res.error);
+      } else {
+        var pokes = res.data;
+        return Q(pokes.length > 0);
+      }
+    });
 }
 
 // Logs into Facebook and redirects to the pokes page
