@@ -1,8 +1,13 @@
 var Q = require("q"),
   FB = require('fb'),
   Phantom = require('./utils/phantom-promise'),
-  Config = require('./config.json'),
-  Utils = require('./utils/utils');
+  Config = require('./secrets.json'),
+  Utils = require('./utils/utils'),
+  https = require('https');
+
+// Set reasonable defaults
+var shortInterval = Config.shortInterval || 15000,
+  longInterval = Config.longInterval || 300000;
 
 // Set the access token
 FB.setAccessToken(Config.accessToken);
@@ -12,28 +17,25 @@ var phantom,
   numPokes = 0,
   numRetry = 0;
 
-// Gets pokes via the Graph API and checks if the target has poked you
+// Queries the Facebook's Graph API to see if anyone has poked you
 function haveBeenPoked() {
-  var deferred = Q.defer();
-  FB.api('/v2.1/me/pokes', function(res) {
-    if (!res || res.error) {
-      deferred.reject(res.error);
-    } else {
-      var result = [];
-      var pokes = res.data;
-      deferred.resolve(pokes.length > 0);
-    }
-  });
-  return deferred.promise;
+  return Q.npost(FB, 'napi', ['/v2.1/me/pokes'])
+    .then(function(res) {
+      if (!res || res.error) {
+        return Q.reject(res.error);
+      } else {
+        var pokes = res.data;
+        return Q(pokes.length > 0);
+      }
+    });
 }
 
-// Logs into Facebook
+// Logs into Facebook and redirects to the pokes page
 function facebookLogin() {
   return Phantom.openPage(page, 'https://www.facebook.com/login.php?next=https%3A%2F%2Fwww.facebook.com%2Fpokes')
     .then(function(status) {
       if (status === 'success') {
-        console.log('Opened Facebook');
-        console.log('Logging in');
+        console.log('Logging in...');
         return Phantom.evaluatePage(page, function(args) {
           document.getElementById("email").value = args.email;
           document.getElementById("pass").value = args.password;
@@ -46,46 +48,54 @@ function facebookLogin() {
     });
 }
 
-// Clicks the poke buttons
+// Clicks all 'Poke Back' buttons on the current page
 function clickPokeButtons() {
   var pokeExists = true;
+  var continueLoop = true;
+  var numRetry = 0;
   return Utils.promiseWhile(function() {
-    return pokeExists;
+    return continueLoop;
   }, function() {
     return Phantom.evaluatePage(page, function() {
         return (document.querySelector("div[id^='poke_live_item_'] a.selected") !== null);
       })
       .then(function(exists) {
         pokeExists = exists;
-        if(exists) {
+        if (exists) {
           return Phantom.evaluatePage(page, function() {
             var pokeButton = document.querySelector("div[id^='poke_live_item_'] a.selected");
             var click = document.createEvent('Events');
             click.initEvent('click', true, false);
             pokeButton.dispatchEvent(click);
-          })
-          .then(function() {
-            console.log('You poked someone');
           });
         }
       })
       .then(function() {
-        return Q.delay(3000);
-      })
+        if (pokeExists) {
+          console.log('You poked someone.');
+          return Q.delay(3000);
+        } else if (numRetry < 1) {
+          console.log('Iteration ' + numRetry + ': Everyone has been poked back. Waiting ' + shortInterval / 1000 + " seconds...");
+          numRetry++;
+          page.reload();
+          return Q.delay(shortInterval);
+        } else {
+          console.log('Hibernating...');
+          continueLoop = false;
+        }
+      });
   });
 }
 
-// Pokes the user with the given userId
-function poke() {
+// Logs into Facebook and starts actively poking back friends
+function startActivelyPoking() {
   Phantom.phantomCreate()
     .then(function(ph) {
-      console.log('Creating page');
       phantom = ph;
       return Phantom.createPage(phantom);
     })
     .then(function(pg) {
       page = pg;
-      console.log('Opening login page');
       return facebookLogin();
     })
     .then(function() {
@@ -103,23 +113,26 @@ function poke() {
     });
 }
 
-// Main loop
-console.log('Starting Poke-War...');
+// This is the main loop
+console.log('Starting Poke-War');
 Utils.promiseWhile(function() {
   return numRetry >= 0;
 }, function() {
-  console.log('Checking for pokes');
+  console.log('Checking for pokes...');
   return haveBeenPoked()
     .then(function(poked) {
       if (poked) {
-        console.log("You have been poked!");
-        return poke();
+        console.log("You have been poked! Seeking revenge...");
+        return startActivelyPoking();
+      } else {
+        console.log('No pokes found. Waiting ' + longInterval / 1000 + ' seconds...');
       }
     })
     .then(function() {
-      return Q.delay(Config.interval);
+      return Q.delay(longInterval);
     })
 })
   .catch(function(error) {
+    console.log('There has been an error');
     console.log(error);
   });
