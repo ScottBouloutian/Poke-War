@@ -1,8 +1,13 @@
 var Q = require("q"),
   FB = require('fb'),
   Phantom = require('./utils/phantom-promise'),
-  Config = require('./config.json'),
-  Utils = require('./utils/utils');
+  Config = require('./secrets.json'),
+  Utils = require('./utils/utils'),
+  https = require('https');
+
+// Set reasonable defaults
+var shortInterval = Config.shortInterval || 15000,
+  longInterval = Config.longInterval || 300000;
 
 // Set the access token
 FB.setAccessToken(Config.accessToken);
@@ -58,7 +63,7 @@ function clickPokeButtons() {
       })
       .then(function(exists) {
         pokeExists = exists;
-        if(exists) {
+        if (exists) {
           return Phantom.evaluatePage(page, function() {
             var pokeButton = document.querySelector("div[id^='poke_live_item_'] a.selected");
             var click = document.createEvent('Events');
@@ -68,17 +73,17 @@ function clickPokeButtons() {
         }
       })
       .then(function() {
-        if(pokeExists) {
+        if (pokeExists) {
           console.log('You poked someone.');
           return Q.delay(3000);
-        } else if(numRetry < 1) {
-          console.log('Iteration ' + numRetry + ': Everyone has been poked back. Waiting ' + Config.shortInterval/1000 + " seconds...");
+        } else if (numRetry < 1) {
+          console.log('Iteration ' + numRetry + ': Everyone has been poked back. Waiting ' + shortInterval / 1000 + " seconds...");
           numRetry++;
           page.reload();
-          return Q.delay(Config.shortInterval);
+          return Q.delay(shortInterval);
         } else {
           console.log('Hibernating...');
-          continueLoop=false;
+          continueLoop = false;
         }
       });
   });
@@ -110,28 +115,26 @@ function startActivelyPoking() {
     });
 }
 
-
-
-// // This is the main loop
-// console.log('Starting Poke-War');
-// Utils.promiseWhile(function() {
-//   return numRetry >= 0;
-// }, function() {
-//   console.log('Checking for pokes...');
-//   return haveBeenPoked()
-//     .then(function(poked) {
-//       if (poked) {
-//         console.log("You have been poked! Seeking revenge...");
-//         return startActivelyPoking();
-//       } else {
-//         console.log('No pokes found. Waiting ' + Config.longInterval/1000 + ' seconds...');
-//       }
-//     })
-//     .then(function() {
-//       return Q.delay(Config.longInterval);
-//     })
-// })
-//   .catch(function(error) {
-//     console.log('There has been an error');
-//     console.log(error);
-//   });
+// This is the main loop
+console.log('Starting Poke-War');
+Utils.promiseWhile(function() {
+  return numRetry >= 0;
+}, function() {
+  console.log('Checking for pokes...');
+  return haveBeenPoked()
+    .then(function(poked) {
+      if (poked) {
+        console.log("You have been poked! Seeking revenge...");
+        return startActivelyPoking();
+      } else {
+        console.log('No pokes found. Waiting ' + longInterval / 1000 + ' seconds...');
+      }
+    })
+    .then(function() {
+      return Q.delay(longInterval);
+    })
+})
+  .catch(function(error) {
+    console.log('There has been an error');
+    console.log(error);
+  });
