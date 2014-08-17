@@ -3,7 +3,11 @@ var Q = require("q"),
   Phantom = require('./utils/phantom-promise'),
   Config = require('./secrets.json'),
   Utils = require('./utils/utils'),
-  https = require('https');
+  https = require('https'),
+  winston = require('winston');
+
+// Setup the logger
+winston.add(winston.transports.File, { filename: 'poke_history.log' });
 
 // Set reasonable defaults
 var shortInterval = Config.shortInterval || 15000,
@@ -76,7 +80,7 @@ function clickPokeButtons() {
       })
       .then(function(pokeTarget) {
         if (pokeExists) {
-          console.log('You poked ' + pokeTarget + '.');
+          winston.log('info', 'You poked ' + pokeTarget + '.');
           numRetry = 0;
           return Q.delay(3000);
         } else if (numRetry < activeAttempts) {
