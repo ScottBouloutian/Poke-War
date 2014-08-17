@@ -7,7 +7,8 @@ var Q = require("q"),
 
 // Set reasonable defaults
 var shortInterval = Config.shortInterval || 15000,
-  longInterval = Config.longInterval || 300000;
+  longInterval = Config.longInterval || 300000,
+  activeAttempts = Config.activeAttempts || 3;
 
 // Set the access token
 FB.setAccessToken(Config.accessToken);
@@ -63,19 +64,23 @@ function clickPokeButtons() {
         pokeExists = exists;
         if (exists) {
           return Phantom.evaluatePage(page, function() {
-            var pokeButton = document.querySelector("div[id^='poke_live_item_'] a.selected");
+            var pokeItem = document.querySelector("div[id^='poke_live_item_']");
+            var pokeButton = pokeItem.querySelector("a.selected");
+            var pokeTarget = pokeItem.querySelector("div._6a._42us a").innerHTML;
             var click = document.createEvent('Events');
             click.initEvent('click', true, false);
             pokeButton.dispatchEvent(click);
+            return pokeTarget;
           });
         }
       })
-      .then(function() {
+      .then(function(pokeTarget) {
         if (pokeExists) {
-          console.log('You poked someone.');
+          console.log('You poked ' + pokeTarget + '.');
+          numRetry = 0;
           return Q.delay(3000);
-        } else if (numRetry < 1) {
-          console.log('Iteration ' + numRetry + ': Everyone has been poked back. Waiting ' + shortInterval / 1000 + " seconds...");
+        } else if (numRetry < activeAttempts) {
+          console.log('Attempt ' + numRetry + ': No pending pokes. Waiting ' + shortInterval / 1000 + " seconds...");
           numRetry++;
           page.reload();
           return Q.delay(shortInterval);
