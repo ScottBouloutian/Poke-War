@@ -34,6 +34,7 @@ app.configure('development', function() {
 app.get('/', home.index);
 app.get('/login/callback', home.loginCallback);
 app.get('/logout', home.logout);
+app.get('/data', home.viewData);
 
 http.createServer(app).listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));

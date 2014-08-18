@@ -23,7 +23,7 @@ npm install
 
 * Start the Login server
 ```
-node login
+node app
 ```
 
 * Login to the Facebook app

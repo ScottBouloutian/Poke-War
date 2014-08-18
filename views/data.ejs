@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Poke-War</title>
+    </head>
+    <body>
+      <p>
+        <% data.forEach(function(user) {%>
+           <p><%= user.name %>: <%= user.numPokes %></p>
+        <% }); %>
+      </p>
+    </body>
+</html>

@@ -1,6 +1,7 @@
 var FB = require('fb'),
   Step = require('step'),
-
+  Q = require('q'),
+  Datastore = require('nedb'),
   config = require('../config');
 
 FB.options({
@@ -85,4 +86,41 @@ exports.loginCallback = function(req, res, next) {
 exports.logout = function(req, res) {
   req.session = null; // clear session
   res.redirect('/');
+};
+
+exports.viewData = function(req, res) {
+
+  // Load the database
+  var db = {};
+  db.users = new Datastore({
+    filename: './users.db',
+    autoload: true
+  });
+  db.pokes = new Datastore({
+    filename: './pokes.db',
+    autoload: true
+  });
+
+  var data = [];
+  Q.npost(db.users, 'find', [{}, {
+    name: 1
+  }])
+    .then(function(docs) {
+      return Q.all(docs.map(function(doc) {
+        return Q.npost(db.pokes, 'count', [{
+            name: doc.name
+          }])
+          .then(function(count) {
+            return {
+              name: doc.name,
+              numPokes: count
+            }
+          });
+      }));
+    })
+    .then(function(result) {
+      res.render('data', {
+        data: result
+      });
+    });
 };

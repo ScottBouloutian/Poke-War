@@ -9,11 +9,12 @@
   "author": "Scott Bouloutian",
   "license": "ISC",
   "dependencies": {
-    "q": "1.0.1",
-    "phantom": "0.6.5",
-    "fb": "0.7.0",
-    "express": "3.1.0",
     "ejs": "*",
+    "express": "3.1.0",
+    "fb": "0.7.0",
+    "nedb": "^0.10.10",
+    "phantom": "0.6.5",
+    "q": "1.0.1",
     "step": "0.0.5",
     "winston": "0.7.3"
   }
