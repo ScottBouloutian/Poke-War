@@ -43,12 +43,12 @@ touch secrets.json
 * Add the following configuration options to ```secrets.json``` :
 ```
 {
-"email": "FACEBOOK_USER_NAME",
-"password": "FACEBOOK_PASSWORD",
-"accessToken": "YOUR_ACCESS_TOKEN"
+    "email": "FACEBOOK_USER_NAME",
+    "password": "FACEBOOK_PASSWORD",
+    "accessToken": "YOUR_ACCESS_TOKEN"
 }
 ```
-
+* Install [phantomjs](http://phantomjs.org)
 * If you've made it this far, do a celebratory dance and start the Poke-War!
 ```
 node index
